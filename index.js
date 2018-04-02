@@ -21,8 +21,8 @@ const BookSchema = new mongoose.Schema({
 });
 
 BookSchema.plugin(mongoolia, {
-  appId: 'P31L0UZ00Q',
-  apiKey: 'c8da3d594cd028ab0af87085e23e7bce',
+  appId: '<your id>',
+  apiKey: '<your api key>',
   indexName: 'books'
 });
 
