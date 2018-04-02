@@ -1,50 +1,35 @@
 const express = require('express');
-const bodyParser = require('body-parser');
-const {graphqlExpress} = require('apollo-server-express');
-const {makeExecutableSchema} = require('graphql-tools');
-const {ApolloEngine} = require('apollo-engine');
+const mongoose = require('mongoose');
+const mongoolia = require('mongoolia').default;
 
-const engine = new ApolloEngine({
-  apiKey: 'test-id'
+mongoose.Promise = global.Promise;
+mongoose.connection.on(
+  'error',
+  console.error.bind(console, 'Error connecting to mongo: ')
+);
+
+mongoose.connection.on('connected', error => {
+  console.log('Connected to MongoDB at localhost.');
 });
 
-// Some fake data
-const books = [
-  {
-    title: "Harry Potter and the Sorcerer's stone",
-    author: 'J.K. Rowling'
-  },
-  {
-    title: 'Jurassic Park',
-    author: 'Michael Crichton'
-  }
-];
+mongoose.connect(`mongodb://localhost:27017`);
 
-// The GraphQL schema in string form
-const typeDefs = `
-  type Query { books: [Book] }
-  type Book { title: String, author: String }
-`;
-
-// The resolvers
-const resolvers = {
-  Query: {books: () => books}
-};
-
-// Put together a schema
-const schema = makeExecutableSchema({
-  typeDefs,
-  resolvers
+const BookSchema = new mongoose.Schema({
+  title: {type: String, required: true, algoliaIndex: true},
+  author: {type: String, required: true, algoliaIndex: true},
+  description: {type: String, required: true, algoliaIndex: true}
 });
+
+BookSchema.plugin(mongoolia, {
+  appId: 'P31L0UZ00Q',
+  apiKey: 'c8da3d594cd028ab0af87085e23e7bce',
+  indexName: 'books'
+});
+
+BookSchema.syncWithAlgolia();
 
 const PORT = 3000;
 
 const app = express();
 
-app.use(
-  '/graphql',
-  bodyParser.json(),
-  graphqlExpress({schema, tracing: true, cacheControl: true})
-);
-
-engine.listen({port: PORT, expressApp: app});
+app.listen(PORT, () => console.log(`Listening on port ${PORT}`));
